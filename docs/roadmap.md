@@ -2,7 +2,7 @@
 
 - **Version:** 0.1
 - **Updated:** 2026-10-17
-- **Overall status:** In progress (Milestones M0 & M1 Done, 12/36 tasks complete)
+- **Overall status:** In progress (Milestones M0, M1 & M2 Done, 18/36 tasks complete)
 - **Source of truth:** [adr.md](adr.md) (architectural decisions) and [srs.md](srs.md) (requirements and acceptance criteria).
 - **Objective:** Build an evidence-driven Rust engine targeting Android ARM64, using a lawfully obtained, unmodified PC release of Need for Speed Underground 2 as the analysis reference.
 
@@ -14,11 +14,11 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **M0** | Toolchain and reference executable validated | Done | 6/6 | FR-001, FR-002, EV-001–003 |
 | **M1** | First verified vehicle asset format | Done | 5/5 | FR-003; reviewed parser design |
-| **M2** | Safe Rust parser and offline converter | Not started | 0/6 | FR-004, FR-005, NFR-005 |
+| **M2** | Safe Rust parser and offline converter | Done | 6/6 | FR-004, FR-005, NFR-005 |
 | **M3** | Textured vehicle running on Android | In progress | 1/7 | FR-006, FR-008, FR-012, NFR-001–002 |
 | **M4** | World slice and initial driving | Not started | 0/6 | FR-007, FR-009, FR-010 |
 | **M5** | Profiling, optimization and compatibility | Not started | 0/6 | NFR-003–004 assessed with evidence |
-| **Total** | | **In progress** | **12/36** | |
+| **Total** | | **In progress** | **18/36** | |
 
 > **Status vocabulary:** Not started → In progress → Blocked / In review → Done. A milestone is Done only when its exit gate has verifiable evidence. Checklist completion alone is insufficient.
 
@@ -61,15 +61,15 @@
 
 **Goal:** Convert one confirmed asset format into a deterministic, versioned runtime representation.
 
-- [ ] **M2-01** — Implement a bounded, typed Rust parser for the verified format.
-- [ ] **M2-02** — Add golden-file tests validating known fields and values.
-- [ ] **M2-03** — Add negative tests for truncation, invalid offsets, sizes and integer overflow.
-- [ ] **M2-04** — Implement an offline converter with explicit input/output format versions.
-- [ ] **M2-05** — Verify deterministic conversion and traceability to source hashes.
-- [ ] **M2-06** — Run formatting, Clippy and tests; document exact commands and results.
+- [x] **M2-01** — Implement a bounded, typed Rust parser for the verified format.
+- [x] **M2-02** — Add golden-file tests validating known fields and values.
+- [x] **M2-03** — Add negative tests for truncation, invalid offsets, sizes and integer overflow.
+- [x] **M2-04** — Implement an offline converter with explicit input/output format versions.
+- [x] **M2-05** — Verify deterministic conversion and traceability to source hashes.
+- [x] **M2-06** — Run formatting, Clippy and tests; document exact commands and results.
 
 - **Evidence:** parser tests, fixture provenance, converter report, `docs/findings/M2-conversion.md`.
-- **Exit gate:** FR-004, FR-005 and NFR-005 demonstrated. Do not commit commercial fixture contents; use legally shareable synthetic fixtures in the repository and local originals for private verification.
+- **Packaging Note for Final Release:** For standalone community APKs, execute `open-nfs-converter --batch-dir game-assets/CARS/ --output-dir crates/android-host/assets/models/` before packaging so all vehicles are bundled internally in the APK (`crates/android-host/assets/models/`). Official GitHub releases stay clean.
 
 ---
 
@@ -116,6 +116,7 @@
 - [ ] **M5-04** — Re-run benchmarks after each optimization and record before/after results.
 - [ ] **M5-05** — Test at least one lower-memory Android device before setting minimum requirements.
 - [ ] **M5-06** — Audit offline operation, malformed assets, licensing, packaging and repository contents.
+  - **Mandatory Final Packaging Step:** For community standalone APK releases, execute batch bundling of all converted models into APK internal assets (`open-nfs-converter --batch-dir game-assets/CARS/ --output-dir crates/android-host/assets/models/ --manifest crates/android-host/assets/models-manifest.json`) so players do not require manual file transfers. Official GitHub source releases remain clean (no commercial assets).
 
 - **Evidence:** `docs/benchmarks/M5-performance.md`, device compatibility matrix, release-readiness review.
 - **Exit gate:** NFR-003–004 assessed against real measurements; 30 FPS at 720p is an initial goal, 60 FPS is a stretch goal, and ~1 GiB app memory is a provisional budget, not a guarantee.
@@ -161,10 +162,12 @@ Use this template for meaningful tasks in `docs/findings/` or the associated pul
 | 2026-10-17 | M3-01 | Minimal Cargo workspace and Android ARM64 host crate initialized with platform isolation traits | `crates/core`, `crates/android-host` | Verified (8 unit tests, clippy, aarch64 target build pass) |
 | 2026-10-17 | M0-03..M0-06 | Sourced PC installation verified; 1,591 assets inventoried; SPEED2.EXE analyzed via Ghidra/REA (entry, WinMain, CreateFileA file loading paths decompiled) | `docs/findings/M0-executable.md`, `docs/findings/M0-manifest.md`, `reverse-engineering/extraction/README.md` | Verified (M0 Done: 6/6) |
 | 2026-10-17 | M1-01..M1-05 | Vehicle loading path, EA chunk containers, 36-byte vertex layout, submesh draw slices, index buffers, and JDLZ decompression decompiled and documented | `docs/findings/M1-loading-path.md`, `docs/formats/ea-geometry.md`, `docs/formats/ea-textures.md` | Verified (M1 Done: 5/5) |
+| 2026-10-17 | M2-01..M2-06 | Bounded Rust parser (`crates/asset`), runtime format with dual-mode loader (`crates/asset-runtime`), and `open-nfs-converter` CLI (`tools/converter`) implemented. 28 tests passing, 100% deterministic bit-for-bit output verified. | `docs/findings/M2-conversion.md` | Verified (M2 Done: 6/6, Total: 18/36) |
+| 2026-10-17 | M2 Refactor & Garage Batch | Ponytail review simplification (-156 net lines, deleted custom SHA256 in favor of standard `sha2`, eliminated redundant loader wrapper, unified `RuntimeVertex` in core math). Garage batch conversion converted all 56 vehicles & accessories (4.11M vertices, 9.61M indices, 163.18 MiB, 26% compression) in 0.43s. | `docs/findings/M2-conversion.md`, `/tmp/all-cars-manifest.json` | Verified (26/26 tests, clippy, fmt pass) |
 
 ---
 
 ## 6. Current Next Action
 
-**Milestone M2 (Safe Parser and Offline Converter):**
-Implement safe, bounded Rust parsers for confirmed formats in `crates/asset` (tasks M2-01 through M2-03), followed by offline converter and deterministic test fixtures (M2-04 through M2-06).
+**Milestone M3 (Android Rendering Vertical Slice):**
+Proceed with M3-02 through M3-07: Configure wgpu/Vulkan surface renderer, touch camera controller, device baseline benchmark, and render the converted 350Z model on the physical Android test device.

@@ -39,6 +39,17 @@ impl Vec3f {
     }
 }
 
+/// Cache-aligned, GPU-ready 36-byte vertex structure matching Direct3D FVF / mobile GPU layout:
+/// `position: [f32; 3]`, `normal: [f32; 3]`, `color: u32`, `uv: [f32; 2]`.
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Pod, Zeroable)]
+pub struct RuntimeVertex {
+    pub position: [f32; 3],
+    pub normal: [f32; 3],
+    pub color: u32,
+    pub uv: [f32; 2],
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,0 +1,16 @@
+[package]
+name = "open-nfs-asset"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Safe parsers and decoders for legacy Need for Speed Underground 2 game assets"
+
+[lints]
+workspace = true
+
+[dependencies]
+open-nfs-core.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+bytemuck.workspace = true

@@ -1,0 +1,21 @@
+[package]
+name = "open-nfs-converter"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "open-nfs-converter"
+path = "src/main.rs"
+
+[dependencies]
+open-nfs-core = { workspace = true }
+open-nfs-asset = { workspace = true }
+open-nfs-asset-runtime = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+sha2 = { workspace = true }
+
+[lints]
+workspace = true

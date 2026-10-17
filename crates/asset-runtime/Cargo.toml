@@ -1,0 +1,14 @@
+[package]
+name = "open-nfs-asset-runtime"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+open-nfs-core = { workspace = true }
+bytemuck = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

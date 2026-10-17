@@ -10,5 +10,5 @@ pub mod math;
 pub mod types;
 
 pub use error::CoreError;
-pub use math::Vec3f;
+pub use math::{RuntimeVertex, Vec3f};
 pub use types::{ChunkId, FixedDelta, Rpm};

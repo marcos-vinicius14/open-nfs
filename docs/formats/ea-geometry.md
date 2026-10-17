@@ -76,8 +76,9 @@ Each car part container (`0x80134010`) contains exactly one part header chunk (`
 | `0x1B` | `u8` | `bone_count` | Number of skinning bones (or 0 for rigid meshes) |
 | `0x20..0x2C` | `[f32; 3]` | `bbox_min` | Bounding box minimum `[x, y, z]` in meters |
 | `0x30..0x3C` | `[f32; 3]` | `bbox_max` | Bounding box maximum `[x, y, z]` in meters |
-| `0x40..0x5F` | `[u8; 32]` | `part_name` | Null-terminated ASCII string (e.g. `"350Z_BASE_A\0"`, `"KIT00_FRONT_BUMPER_A\0"`) |
-| `0x60..0xBF` | `[u8; 96]` | `unknown_padding` | Material bind indices and animation parameters |
+| `0x40..0x7F` | `[f32; 16]` | `transform_matrix` | 4x4 local transform / orientation matrix (`[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]` identity in standard body parts) |
+| `0x80..0xA3` | `[u8; 36]` | `mount_parameters` | Mount point vectors and animation parameters |
+| `0xA4..0xBF` | `[u8; 28]` | `part_name` | Null-terminated ASCII string (e.g. `"350Z_BASE_A\0"`, `"350Z_STYLE01_HOOD_A\0"`) |
 
 ### 3.2. Mesh Descriptor (`0x00134900`)
 
