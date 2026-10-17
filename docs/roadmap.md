@@ -15,10 +15,10 @@
 | **M0** | Toolchain and reference executable validated | In progress | 2/6 | FR-001, FR-002, EV-001–003 |
 | **M1** | First verified vehicle asset format | Not started | 0/5 | FR-003; reviewed parser design |
 | **M2** | Safe Rust parser and offline converter | Not started | 0/6 | FR-004, FR-005, NFR-005 |
-| **M3** | Textured vehicle running on Android | Not started | 0/7 | FR-006, FR-008, FR-012, NFR-001–002 |
+| **M3** | Textured vehicle running on Android | In progress | 1/7 | FR-006, FR-008, FR-012, NFR-001–002 |
 | **M4** | World slice and initial driving | Not started | 0/6 | FR-007, FR-009, FR-010 |
 | **M5** | Profiling, optimization and compatibility | Not started | 0/6 | NFR-003–004 assessed with evidence |
-| **Total** | | **In progress** | **2/36** | |
+| **Total** | | **In progress** | **3/36** | |
 
 > **Status vocabulary:** Not started → In progress → Blocked / In review → Done. A milestone is Done only when its exit gate has verifiable evidence. Checklist completion alone is insufficient.
 
@@ -77,7 +77,7 @@
 
 **Goal:** Display one textured vehicle on the physical Android test device.
 
-- [ ] **M3-01** — Create a minimal Cargo workspace and Android ARM64 host; keep platform-specific code isolated.
+- [x] **M3-01** — Create a minimal Cargo workspace and Android ARM64 host; keep platform-specific code isolated.
 - [ ] **M3-02** — Probe Vulkan/wgpu capabilities on the target device and record the result.
 - [ ] **M3-03** — Render the converted vehicle geometry and supported textures/materials.
 - [ ] **M3-04** — Implement a movable camera and basic touch input.
@@ -158,6 +158,7 @@ Use this template for meaningful tasks in `docs/findings/` or the associated pul
 | :--- | :--- | :--- | :--- | :--- |
 | 2026-10-17 | Planning | Initial roadmap aligned with ADR v0.1 and SRS v0.1 | `docs/adr.md`, `docs/srs.md` | No engineering tasks started |
 | 2026-10-17 | M0-01, M0-02 | Toolchain inventoried, cargo-ndk installed, REA/Ghidra configured and verified via live smoke test | `docs/findings/M0-toolchain.md` | Verified (2/6 tasks Done) |
+| 2026-10-17 | M3-01 | Minimal Cargo workspace and Android ARM64 host crate initialized with platform isolation traits | `crates/core`, `crates/android-host` | Verified (8 unit tests, clippy, aarch64 target build pass) |
 
 ---
 
