@@ -1,0 +1,17 @@
+[package]
+name = "open-nfs-android-host"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Android NDK activity host, surface lifecycle, and input bridge for open-nfs"
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+open-nfs-core = { path = "../core" }
+tracing.workspace = true
