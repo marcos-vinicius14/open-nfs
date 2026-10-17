@@ -1,0 +1,49 @@
+# Rust
+/target
+Cargo.lock
+
+# Proprietary Game Assets & Local Inputs (ADR-008, NFR-009)
+/local-input/*
+!/local-input/README.md
+*.exe
+*.EXE
+*.dll
+*.DLL
+*.iso
+*.ISO
+*.bin
+*.BIN
+*.cue
+*.CUE
+*.viv
+*.VIV
+*.lzx
+*.LZX
+*.raw
+*.RAW
+
+# Android Build & Artifacts
+.gradle/
+build/
+*.apk
+*.aab
+local.properties
+
+# Reverse Engineering & Ghidra / REA ephemeral artifacts
+.rea/
+*.gpr
+*.rep/
+*.idb
+*.i64
+*.nam
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
