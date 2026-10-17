@@ -5,6 +5,9 @@ Cargo.lock
 # Proprietary Game Assets & Local Inputs (ADR-008, NFR-009)
 /local-input/*
 !/local-input/README.md
+/local-input/.staging/
+/game-assets/
+/reverse-engineering/binaries/
 *.exe
 *.EXE
 *.dll
