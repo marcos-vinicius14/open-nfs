@@ -2,7 +2,7 @@
 
 - **Version:** 0.1
 - **Updated:** 2026-10-17
-- **Overall status:** Not started
+- **Overall status:** In progress (Milestones M0 & M1 Done, 12/36 tasks complete)
 - **Source of truth:** [adr.md](adr.md) (architectural decisions) and [srs.md](srs.md) (requirements and acceptance criteria).
 - **Objective:** Build an evidence-driven Rust engine targeting Android ARM64, using a lawfully obtained, unmodified PC release of Need for Speed Underground 2 as the analysis reference.
 
@@ -13,12 +13,12 @@
 | Milestone | Deliverable | Status | Progress | Exit requirements |
 | :--- | :--- | :--- | :--- | :--- |
 | **M0** | Toolchain and reference executable validated | Done | 6/6 | FR-001, FR-002, EV-001–003 |
-| **M1** | First verified vehicle asset format | Not started | 0/5 | FR-003; reviewed parser design |
+| **M1** | First verified vehicle asset format | Done | 5/5 | FR-003; reviewed parser design |
 | **M2** | Safe Rust parser and offline converter | Not started | 0/6 | FR-004, FR-005, NFR-005 |
 | **M3** | Textured vehicle running on Android | In progress | 1/7 | FR-006, FR-008, FR-012, NFR-001–002 |
 | **M4** | World slice and initial driving | Not started | 0/6 | FR-007, FR-009, FR-010 |
 | **M5** | Profiling, optimization and compatibility | Not started | 0/6 | NFR-003–004 assessed with evidence |
-| **Total** | | **In progress** | **7/36** | |
+| **Total** | | **In progress** | **12/36** | |
 
 > **Status vocabulary:** Not started → In progress → Blocked / In review → Done. A milestone is Done only when its exit gate has verifiable evidence. Checklist completion alone is insufficient.
 
@@ -46,13 +46,13 @@
 
 **Goal:** Identify a real vehicle-related asset and trace how the original game reads it.
 
-- [ ] **M1-01** — Inventory the real installation tree; distinguish observed filenames from hypotheses.
-- [ ] **M1-02** — Identify at least one candidate vehicle asset and its container/format, if any.
-- [ ] **M1-03** — Trace a file-open/read/parse path using addresses and references in Ghidra/REA.
-- [ ] **M1-04** — Document confirmed fields, offsets, byte order, compression and unresolved fields with sample evidence.
-- [ ] **M1-05** — Review a minimal Rust parser interface and malformed-input constraints before implementation.
+- [x] **M1-01** — Inventory the real installation tree; distinguish observed filenames from hypotheses.
+- [x] **M1-02** — Identify at least one candidate vehicle asset and its container/format, if any.
+- [x] **M1-03** — Trace a file-open/read/parse path using addresses and references in Ghidra/REA.
+- [x] **M1-04** — Document confirmed fields, offsets, byte order, compression and unresolved fields with sample evidence.
+- [x] **M1-05** — Review a minimal Rust parser interface and malformed-input constraints before implementation.
 
-- **Evidence:** `docs/findings/M1-loading-path.md`, `docs/formats/<confirmed-format>.md`.
+- **Evidence:** `docs/findings/M1-loading-path.md`, `docs/formats/ea-geometry.md`, `docs/formats/ea-textures.md`.
 - **Exit gate:** FR-003 demonstrated with a verified sample and reviewed parser design. If no format can be confirmed, stop and document the blocker rather than fabricate a schema.
 
 ---
@@ -160,9 +160,11 @@ Use this template for meaningful tasks in `docs/findings/` or the associated pul
 | 2026-10-17 | M0-01, M0-02 | Toolchain inventoried, cargo-ndk installed, REA/Ghidra configured and verified via live smoke test | `docs/findings/M0-toolchain.md` | Verified (2/6 tasks Done) |
 | 2026-10-17 | M3-01 | Minimal Cargo workspace and Android ARM64 host crate initialized with platform isolation traits | `crates/core`, `crates/android-host` | Verified (8 unit tests, clippy, aarch64 target build pass) |
 | 2026-10-17 | M0-03..M0-06 | Sourced PC installation verified; 1,591 assets inventoried; SPEED2.EXE analyzed via Ghidra/REA (entry, WinMain, CreateFileA file loading paths decompiled) | `docs/findings/M0-executable.md`, `docs/findings/M0-manifest.md`, `reverse-engineering/extraction/README.md` | Verified (M0 Done: 6/6) |
+| 2026-10-17 | M1-01..M1-05 | Vehicle loading path, EA chunk containers, 36-byte vertex layout, submesh draw slices, index buffers, and JDLZ decompression decompiled and documented | `docs/findings/M1-loading-path.md`, `docs/formats/ea-geometry.md`, `docs/formats/ea-textures.md` | Verified (M1 Done: 5/5) |
 
 ---
 
 ## 6. Current Next Action
 
-**M1-01 & M1-02:** Select candidate vehicle asset `CARS/350Z/GEOMETRY.BIN` and `TEXTURES.BIN`; trace loading path in `SPEED2.EXE` via Ghidra/REA.
+**Milestone M2 (Safe Parser and Offline Converter):**
+Implement safe, bounded Rust parsers for confirmed formats in `crates/asset` (tasks M2-01 through M2-03), followed by offline converter and deterministic test fixtures (M2-04 through M2-06).
