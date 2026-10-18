@@ -70,3 +70,42 @@ fn test_local_350z_asset_if_present() {
         assert!((idx as usize) < base.vertices.len());
     }
 }
+
+#[test]
+fn test_local_350z_textures_if_present() {
+    let candidates = [
+        Path::new("game-assets/CARS/350Z/TEXTURES.BIN"),
+        Path::new("../../game-assets/CARS/350Z/TEXTURES.BIN"),
+    ];
+    let path = match candidates.iter().find(|p| p.exists()) {
+        Some(p) => *p,
+        None => {
+            eprintln!("Local game-assets/CARS/350Z/TEXTURES.BIN not present; skipping local test.");
+            return;
+        }
+    };
+
+    let raw_bytes = std::fs::read(path).expect("Failed to read local 350Z TEXTURES.BIN");
+    let pack = open_nfs_asset::texture::parse_texture_pack(&raw_bytes)
+        .expect("Failed to parse 350Z TEXTURES.BIN");
+
+    println!("Loaded texture package: {:?}", pack.package_name);
+    println!("Total textures extracted: {}", pack.textures.len());
+    assert!(!pack.textures.is_empty());
+
+    // Find the 128x64 DXT3 texture we analyzed
+    let tex = pack
+        .textures
+        .iter()
+        .find(|t| t.width == 128 && t.height == 64)
+        .expect("Failed to find 128x64 texture");
+
+    assert_eq!(tex.format, open_nfs_asset::texture::TextureFormat::Dxt3);
+    assert!(!tex.data.is_empty());
+
+    // Decode to RGBA8
+    let rgba = tex
+        .decode_to_rgba8()
+        .expect("Failed to decode DXT3 to RGBA8");
+    assert_eq!(rgba.len(), 128 * 64 * 4);
+}

@@ -1,5 +1,6 @@
 # Rust
-/target
+target/
+*.ppm
 Cargo.lock
 
 # Proprietary Game Assets & Local Inputs (ADR-008, NFR-009)

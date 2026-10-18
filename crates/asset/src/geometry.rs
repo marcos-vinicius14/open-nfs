@@ -107,12 +107,41 @@ pub fn parse_geometry(buffer: &[u8]) -> Result<ParsedGeometryArchive, GeometryEr
     Ok(archive)
 }
 
+fn ea_bin_hash(s: &str) -> u32 {
+    let mut h: u32 = 0xFFFF_FFFF;
+    for b in s.bytes() {
+        h = h.wrapping_mul(33).wrapping_add(b as u32);
+    }
+    h
+}
+
+/// Resolve virtual texture slots and skin placeholders to concrete vehicle textures.
+fn resolve_submesh_material(tex_hash: u32, mat_hash: u32) -> u32 {
+    match tex_hash {
+        // Car body skin and detail atlas placeholders (350Z_SKIN1, CARSKIN_TEX, SKIRT_SKIN)
+        // all UV-map into the 512x512 350Z_DOORLINE + 350Z_DOORLINE_MASK composited CARSKIN texture.
+        0xA675_4656 | 0x3C84_D757 | 0xA736_6AE6 => 0x3C84_D757,
+        // HEADLIGHT_LEFT (0xA7E6EA53) and HEADLIGHT_RIGHT (0xA532FC46) interior submeshes
+        // all UV-map into 350Z_KIT00_HEADLIGHT_OFF (0xF7C9D5DB, 64x64 DXT1).
+        0xA7E6_EA53 | 0xA532_FC46 => 0xF7C9_D5DB,
+        // BRAKELIGHT outer lens (0x000BCBBF, 0x01F40B32) binds the 256x64 ribbed ruby-red
+        // 350Z_KIT00_BRAKELIGHT_GLASS texture (0x9B4396C7).
+        0x000B_CBBF | 0x01F4_0B32 => 0x9B43_96C7,
+        // BRAKELIGHT inner housing (0xD947F346, 0x02B52399) and HUFF-compressed engine/rotor textures
+        // fall back to their material shader.
+        0xD947_F346 | 0x02B5_2399 | 0x54AA_F7C6 | 0x621F_43FC if mat_hash != 0 => mat_hash,
+        _ => tex_hash,
+    }
+}
+
 fn parse_part_container(
     payload: &[u8],
     base_offset: usize,
 ) -> Result<ParsedCarPart, GeometryError> {
     let mut iter = ChunkIterator::new(payload, base_offset);
     let mut header_opt: Option<PartHeader> = None;
+    let mut tex_hashes: Vec<u32> = Vec::new();
+    let mut mat_hashes: Vec<u32> = Vec::new();
     let mut vertices: Vec<Vertex36> = Vec::new();
     let mut indices: Vec<u16> = Vec::new();
     let mut submeshes: Vec<SubMeshSlice> = Vec::new();
@@ -122,15 +151,30 @@ fn parse_part_container(
             SOLID_PART_HEADER => {
                 header_opt = Some(parse_part_header(chunk.payload, chunk.offset)?);
             }
+            SOLID_PART_TRANSFORM => {
+                for entry in chunk.payload.chunks_exact(8) {
+                    let h = u32::from_le_bytes([entry[0], entry[1], entry[2], entry[3]]);
+                    tex_hashes.push(h);
+                }
+            }
+            SOLID_PART_MOUNTS => {
+                for entry in chunk.payload.chunks_exact(8) {
+                    let h = u32::from_le_bytes([entry[0], entry[1], entry[2], entry[3]]);
+                    mat_hashes.push(h);
+                }
+            }
             SOLID_MESH_CONTAINER => {
-                let streams = parse_mesh_container(chunk.payload, chunk.offset + 8)?;
+                let streams = parse_mesh_container(
+                    chunk.payload,
+                    chunk.offset + 8,
+                    &tex_hashes,
+                    &mat_hashes,
+                )?;
                 vertices = streams.vertices;
                 indices = streams.indices;
                 submeshes = streams.submeshes;
             }
-            _ => {
-                // Ignore auxiliary chunks (0x00134012 transforms, 0x00134013 mounts, animations)
-            }
+            _ => {}
         }
     }
 
@@ -184,15 +228,47 @@ fn parse_part_header(data: &[u8], offset: usize) -> Result<PartHeader, GeometryE
         f32::from_le_bytes([data[0x38], data[0x39], data[0x3A], data[0x3B]]),
     ];
 
-    // Read null-terminated ASCII string from 0xA4..0xC0 (28 bytes)
+    // Read null-terminated ASCII string from 0xA4..0xC0 (28 bytes max, 27 chars + NUL)
     let name_bytes = &data[0xA4..0xC0];
     let len = name_bytes
         .iter()
         .position(|&b| b == 0)
         .unwrap_or(name_bytes.len());
-    let name = std::str::from_utf8(&name_bytes[..len])
+    let mut name = std::str::from_utf8(&name_bytes[..len])
         .map_err(|_| GeometryError::InvalidPartName("non-utf8 characters in part identifier"))?
         .to_string();
+
+    // Restore 27-character truncated part names using the un-truncated `part_hash`
+    if name.len() == 27 && ea_bin_hash(&name) != part_hash {
+        const SUFFIXES: &[&str] = &[
+            "A",
+            "B",
+            "C",
+            "D",
+            "_A",
+            "_B",
+            "_C",
+            "_D",
+            "R_A",
+            "R_B",
+            "R_C",
+            "R_D",
+            "T_A",
+            "T_B",
+            "T_C",
+            "T_D",
+            "T_UNLIT_A",
+            "T_UNLIT_B",
+            "T_UNLIT_C",
+        ];
+        for sfx in SUFFIXES {
+            let candidate = format!("{}{}", name, sfx);
+            if ea_bin_hash(&candidate) == part_hash {
+                name = candidate;
+                break;
+            }
+        }
+    }
 
     Ok(PartHeader {
         name,
@@ -217,6 +293,8 @@ struct ParsedMeshStreams {
 fn parse_mesh_container(
     payload: &[u8],
     base_offset: usize,
+    tex_hashes: &[u32],
+    mat_hashes: &[u32],
 ) -> Result<ParsedMeshStreams, GeometryError> {
     let mut iter = ChunkIterator::new(payload, base_offset);
     let mut vertices = Vec::new();
@@ -311,12 +389,27 @@ fn parse_mesh_container(
                             f32::from_le_bytes([entry[20], entry[21], entry[22], entry[23]]),
                             f32::from_le_bytes([entry[24], entry[25], entry[26], entry[27]]),
                         ];
-                        let material_id =
+                        let tex_idx =
                             u32::from_le_bytes([entry[28], entry[29], entry[30], entry[31]]);
+                        let mat_idx =
+                            u32::from_le_bytes([entry[32], entry[33], entry[34], entry[35]]);
                         let index_offset =
                             u32::from_le_bytes([entry[52], entry[53], entry[54], entry[55]]);
-                        let shader_flags =
+                        let raw_flags =
                             u32::from_le_bytes([entry[56], entry[57], entry[58], entry[59]]);
+
+                        let (material_id, shader_flags) =
+                            if !tex_hashes.is_empty() || !mat_hashes.is_empty() {
+                                let raw_tex =
+                                    tex_hashes.get(tex_idx as usize).copied().unwrap_or(tex_idx);
+                                let raw_mat = mat_hashes
+                                    .get(mat_idx as usize)
+                                    .copied()
+                                    .unwrap_or(raw_flags);
+                                (resolve_submesh_material(raw_tex, raw_mat), raw_mat)
+                            } else {
+                                (tex_idx, raw_flags)
+                            };
 
                         submeshes.push(SubMeshSlice {
                             bbox_min,

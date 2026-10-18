@@ -166,3 +166,30 @@ fn test_unaligned_slice_safety() {
         assert!(err.is_err());
     }
 }
+
+#[test]
+fn test_assemble_model_parts() {
+    let mut model = create_sample_runtime_model();
+    // Add a second part
+    let mut part2 = model.parts[0].clone();
+    part2.name = "SAMPLE_PART_B".to_string();
+    part2.lod_level = 0;
+    model.parts.push(part2);
+
+    let (verts, indices, submeshes) = model.assemble_lod(0);
+    assert_eq!(verts.len(), 6);
+    assert_eq!(indices.len(), 6);
+    assert_eq!(submeshes.len(), 2);
+
+    // Verify index offset shift for second part
+    assert_eq!(indices[0], 0);
+    assert_eq!(indices[1], 1);
+    assert_eq!(indices[2], 2);
+    assert_eq!(indices[3], 3); // 0 + 3
+    assert_eq!(indices[4], 4); // 1 + 3
+    assert_eq!(indices[5], 5); // 2 + 3
+
+    // Verify submesh index offset shift
+    assert_eq!(submeshes[0].index_offset, 0);
+    assert_eq!(submeshes[1].index_offset, 3);
+}

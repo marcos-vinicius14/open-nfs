@@ -4,6 +4,7 @@ members = [
     "crates/core",
     "crates/asset",
     "crates/asset-runtime",
+    "crates/render",
     "crates/android-host",
     "tools/converter",
 ]
@@ -34,3 +35,4 @@ sha2 = "0.10.8"
 open-nfs-core = { path = "crates/core" }
 open-nfs-asset = { path = "crates/asset" }
 open-nfs-asset-runtime = { path = "crates/asset-runtime" }
+open-nfs-render = { path = "crates/render" }

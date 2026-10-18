@@ -14,4 +14,17 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 open-nfs-core = { path = "../core" }
+open-nfs-asset = { path = "../asset" }
+open-nfs-asset-runtime = { path = "../asset-runtime" }
+open-nfs-render = { path = "../render" }
+wgpu = "24"
+pollster = "0.4"
 tracing.workspace = true
+raw-window-handle = "0.6"
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+winit = "0.30"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android-activity = { version = "0.6", features = ["native-activity"] }
+ndk = { version = "0.9.0", features = ["rwh_06", "nativewindow"] }

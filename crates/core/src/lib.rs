@@ -11,4 +11,4 @@ pub mod types;
 
 pub use error::CoreError;
 pub use math::{RuntimeVertex, Vec3f};
-pub use types::{ChunkId, FixedDelta, Rpm};
+pub use types::{ChunkId, FixedDelta, Rpm, VehicleControlState};

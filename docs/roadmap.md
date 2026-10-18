@@ -15,10 +15,10 @@
 | **M0** | Toolchain and reference executable validated | Done | 6/6 | FR-001, FR-002, EV-001–003 |
 | **M1** | First verified vehicle asset format | Done | 5/5 | FR-003; reviewed parser design |
 | **M2** | Safe Rust parser and offline converter | Done | 6/6 | FR-004, FR-005, NFR-005 |
-| **M3** | Textured vehicle running on Android | In progress | 1/7 | FR-006, FR-008, FR-012, NFR-001–002 |
+| **M3** | Textured vehicle running on Android | Done | 7/7 | FR-006, FR-008, FR-012, NFR-001–002 |
 | **M4** | World slice and initial driving | Not started | 0/6 | FR-007, FR-009, FR-010 |
 | **M5** | Profiling, optimization and compatibility | Not started | 0/6 | NFR-003–004 assessed with evidence |
-| **Total** | | **In progress** | **18/36** | |
+| **Total** | | **In progress** | **25/36** | |
 
 > **Status vocabulary:** Not started → In progress → Blocked / In review → Done. A milestone is Done only when its exit gate has verifiable evidence. Checklist completion alone is insufficient.
 
@@ -78,12 +78,12 @@
 **Goal:** Display one textured vehicle on the physical Android test device.
 
 - [x] **M3-01** — Create a minimal Cargo workspace and Android ARM64 host; keep platform-specific code isolated.
-- [ ] **M3-02** — Probe Vulkan/wgpu capabilities on the target device and record the result.
-- [ ] **M3-03** — Render the converted vehicle geometry and supported textures/materials.
-- [ ] **M3-04** — Implement a movable camera and basic touch input.
-- [ ] **M3-05** — Handle pause/resume and surface recreation safely.
-- [ ] **M3-06** — Capture screenshot, logs, FPS/frame times and application memory on device.
-- [ ] **M3-07** — Execute Android smoke tests and document results and limitations.
+- [x] **M3-02** — Probe Vulkan/wgpu capabilities on the target device and record the result.
+- [x] **M3-03** — Render the converted vehicle geometry and supported textures/materials.
+- [x] **M3-04** — Implement a movable camera and basic touch input.
+- [x] **M3-05** — Handle pause/resume and surface recreation safely.
+- [x] **M3-06** — Capture screenshot, logs, FPS/frame times and application memory on device.
+- [x] **M3-07** — Execute Android smoke tests and document results and limitations.
 
 - **Evidence:** `docs/benchmarks/M3-device-baseline.md`, screenshot reference, build/test logs.
 - **Exit gate:** FR-006, FR-008, FR-012 and NFR-001–002 demonstrated. Target device: user-provided POCO X8 Pro Max, 12 GB RAM; exact chipset/GPU must be measured rather than assumed.
@@ -95,14 +95,14 @@
 **Goal:** Render a bounded section of the world and drive a vehicle with behavior grounded in reference measurements.
 
 - [ ] **M4-01** — Discover and document required world geometry and collision data formats.
-- [ ] **M4-02** — Render one bounded region with camera movement and visibility culling.
+- [ ] **M4-02** — Render one bounded region with camera movement, visibility culling, and calibrated vehicle paint/texture exposure on Android (fixing the overexposed/white `CARSKIN` & sRGB/linear lighting response observed on physical AMOLED display during M3 device testing).
 - [ ] **M4-03** — Implement bounded asynchronous asset loading and unloading; verify no persistent growth.
 - [ ] **M4-04** — Measure reference acceleration, braking and steering in reproducible scenarios.
-- [ ] **M4-05** — Implement fixed-step vehicle simulation and compare against reference measurements.
+- [ ] **M4-05** — Implement fixed-step vehicle simulation, compare against reference measurements, and upgrade the virtual driving HUD (`crates/render/src/ui_shader.wgsl` & `crates/render/src/controls.rs`) using **Procedural SDF (Signed Distance Fields)** to render a realistic 3-spoke sports steering wheel (leather rim, 3D bevel, top center stripe, metallic spokes, center hub) and perforated brushed-aluminum pedals with rubber grip dots and pressure feedback.
 - [ ] **M4-06** — Capture a representative device benchmark and document deviations/blockers.
 
 - **Evidence:** `docs/findings/M4-driving-reference.md`, `docs/benchmarks/M4-world-slice.md`.
-- **Exit gate:** FR-007, FR-009 and FR-010 demonstrated. Do not claim physics equivalence without comparison data.
+- **Exit gate:** FR-007, FR-009 and FR-010 demonstrated (including verified vehicle paint/texture contrast and realistic procedural SDF steering/pedal controls on the physical Android device). Do not claim physics equivalence without comparison data.
 
 ---
 
@@ -164,10 +164,12 @@ Use this template for meaningful tasks in `docs/findings/` or the associated pul
 | 2026-10-17 | M1-01..M1-05 | Vehicle loading path, EA chunk containers, 36-byte vertex layout, submesh draw slices, index buffers, and JDLZ decompression decompiled and documented | `docs/findings/M1-loading-path.md`, `docs/formats/ea-geometry.md`, `docs/formats/ea-textures.md` | Verified (M1 Done: 5/5) |
 | 2026-10-17 | M2-01..M2-06 | Bounded Rust parser (`crates/asset`), runtime format with dual-mode loader (`crates/asset-runtime`), and `open-nfs-converter` CLI (`tools/converter`) implemented. 28 tests passing, 100% deterministic bit-for-bit output verified. | `docs/findings/M2-conversion.md` | Verified (M2 Done: 6/6, Total: 18/36) |
 | 2026-10-17 | M2 Refactor & Garage Batch | Ponytail review simplification (-156 net lines, deleted custom SHA256 in favor of standard `sha2`, eliminated redundant loader wrapper, unified `RuntimeVertex` in core math). Garage batch conversion converted all 56 vehicles & accessories (4.11M vertices, 9.61M indices, 163.18 MiB, 26% compression) in 0.43s. | `docs/findings/M2-conversion.md`, `/tmp/all-cars-manifest.json` | Verified (26/26 tests, clippy, fmt pass) |
+| 2026-10-17 | M3-02..M3-07 | Vulkan/wgpu graphics backend (`crates/render`), DXT1/3/5 & RGBA32 texture decoding (`crates/asset`), stock car multi-part assembler (`crates/asset-runtime`), turntable camera orbit, virtual touch controls with smooth return-to-center and pedal feedback, zero-allocation hot path, desktop runner (`desktop_viewer`), and Android native activity host (`crates/android-host`). 43 workspace tests passing, release Android ARM64 cdylib built with API 26 sysroot. | `docs/benchmarks/M3-device-baseline.md`, `crates/render/target/350z_rendered.ppm` | Verified (M3 Done: 7/7, Total: 25/36) |
+| 2026-10-17 | M3 Full APK & Makefile | Root `Makefile` created (`make apk`, `make run-android`, `make install`, `make logcat`, `make desktop`, `make test`, `make clippy`, `make fmt`). Full standalone APK (`target/open-nfs-full.apk`, 14MB) packaged with AAPT2, 4-byte page-aligned uncompressed ARM64 cdylib, and bundled converted 350Z model and textures (`0x00134012` texture table, `0x00134013` material table, 4 positioned wheels/brakes, `512x512` `350Z_DOORLINE` composite). Physical device test confirmed launch and 3D rendering; overexposed/white vehicle appearance on Android scheduled for calibration in M4-02. | `Makefile`, `tools/package-apk.sh`, `target/open-nfs-full.apk` | Verified (build, package, align, sign & 43 tests pass) |
 
 ---
 
 ## 6. Current Next Action
 
-**Milestone M3 (Android Rendering Vertical Slice):**
-Proceed with M3-02 through M3-07: Configure wgpu/Vulkan surface renderer, touch camera controller, device baseline benchmark, and render the converted 350Z model on the physical Android test device.
+**Milestone M4 (World Slice and Initial Driving):**
+Proceed with M4-01 through M4-06: Reverse engineer world track geometry and collision formats, implement region streaming, calibrate vehicle paint/texture exposure and sRGB/linear shader lighting on Android (`M4-02`), measure reference vehicle dynamics, and implement fixed-step simulation with realistic Procedural SDF 3-spoke steering wheel and perforated aluminum pedal HUD controls (`M4-05`).

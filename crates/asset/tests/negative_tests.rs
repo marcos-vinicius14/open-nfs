@@ -147,3 +147,54 @@ fn test_geometry_unaligned_slice_safety() {
         assert!(err.is_err());
     }
 }
+
+#[test]
+fn test_dxt_decoders_invalid_dimensions_and_truncated_data() {
+    let mut out = [0u8; 64];
+
+    // Zero dimensions should fail
+    assert!(matches!(
+        open_nfs_asset::texture::decode_dxt1(&[0u8; 8], 0, 4, &mut out),
+        Err(TextureError::InvalidDimensions { .. })
+    ));
+    assert!(matches!(
+        open_nfs_asset::texture::decode_dxt3(&[0u8; 16], 4, 0, &mut out),
+        Err(TextureError::InvalidDimensions { .. })
+    ));
+    assert!(matches!(
+        open_nfs_asset::texture::decode_dxt5(&[0u8; 16], 0, 0, &mut out),
+        Err(TextureError::InvalidDimensions { .. })
+    ));
+
+    // Truncated data buffers
+    assert!(matches!(
+        open_nfs_asset::texture::decode_dxt1(&[0u8; 7], 4, 4, &mut out),
+        Err(TextureError::UnexpectedEof { .. })
+    ));
+    assert!(matches!(
+        open_nfs_asset::texture::decode_dxt3(&[0u8; 15], 4, 4, &mut out),
+        Err(TextureError::UnexpectedEof { .. })
+    ));
+    assert!(matches!(
+        open_nfs_asset::texture::decode_dxt5(&[0u8; 15], 4, 4, &mut out),
+        Err(TextureError::UnexpectedEof { .. })
+    ));
+}
+
+#[test]
+fn test_dxt1_solid_color_synthetic_block() {
+    // 4x4 DXT1 block with pure red (c0 = 0xF800, c1 = 0x0000, lookup = 0x00000000)
+    let mut block = [0u8; 8];
+    block[0..2].copy_from_slice(&0xF800u16.to_le_bytes());
+    block[2..4].copy_from_slice(&0x0000u16.to_le_bytes());
+    block[4..8].copy_from_slice(&0x00000000u32.to_le_bytes());
+
+    let mut out = [0u8; 4 * 4 * 4];
+    open_nfs_asset::texture::decode_dxt1(&block, 4, 4, &mut out)
+        .expect("Failed to decode synthetic DXT1 block");
+
+    // All pixels should be pure red (255, 0, 0, 255)
+    for pixel in out.chunks_exact(4) {
+        assert_eq!(pixel, &[255, 0, 0, 255]);
+    }
+}

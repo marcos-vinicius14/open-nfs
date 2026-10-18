@@ -63,4 +63,13 @@ pub enum TextureError {
         expected: usize,
         available: usize,
     },
+
+    #[error("Invalid texture dimensions: {width}x{height}")]
+    InvalidDimensions { width: usize, height: usize },
+
+    #[error("Corrupt or truncated DXT block data at offset {offset:#x}")]
+    InvalidDxtData { offset: usize },
+
+    #[error("Unsupported texture format for RGBA conversion: {0:?}")]
+    UnsupportedFormat(crate::texture::TextureFormat),
 }

@@ -1,0 +1,23 @@
+[package]
+name = "open-nfs-render"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Vulkan and wgpu graphics backend, camera, and pipeline for open-nfs"
+
+[lints]
+workspace = true
+
+[dependencies]
+open-nfs-core = { path = "../core" }
+open-nfs-asset = { path = "../asset" }
+open-nfs-asset-runtime = { path = "../asset-runtime" }
+wgpu = "24"
+bytemuck.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+raw-window-handle = "0.6"
+
+[dev-dependencies]
+pollster = "0.4"
